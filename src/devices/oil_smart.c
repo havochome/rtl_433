@@ -9,6 +9,7 @@
     it under the terms of the GNU General Public License as published by
     the Free Software Foundation; either version 2 of the License, or
     (at your option) any later version.
+
 */
 
 #include "decoder.h"
@@ -71,10 +72,10 @@ function of the receiver and Alarm does not appear to be coded by transmitter.
 example packets are:
 
 - raw: {158}555558 9999 996a 6559aaa99996a55696a9a5963c - original
-       {158}555558 a955 5569 5a9aaa56a996966aa69596a63c - havochome's sensor
+       {158}555558 a955 5569 5a9aaa56a996966aa69596a63c - my sensor
 - aligned: {134}9999996a 6559aaa999969aa6aa9a6995 fc
 - decoded: 5558 bd01 5642 0497 - original
-           1ff9 c40e 1668 2762 - havochome's sensor
+           1ff9 c40e 1668 2762 - my sensor
 
 TODO: this is not confirmed
 Start of frame full preamble is depending on first data bit either
@@ -84,6 +85,7 @@ Start of frame full preamble is depending on first data bit either
 */
 static int oil_smart_decode(r_device *decoder, bitbuffer_t *bitbuffer, unsigned row, unsigned bitpos)
 {
+
     bitbuffer_t databits = {0};
     bitbuffer_manchester_decode(bitbuffer, row, bitpos, &databits, 64);
 
@@ -98,7 +100,7 @@ static int oil_smart_decode(r_device *decoder, bitbuffer_t *bitbuffer, unsigned 
         return 0; // DECODE_FAIL_MIC; // TODO: fix calling code to handle negative return values
     }
 
-    // Unit ID does NOT change when you force TxStatus: Rapid
+    // Unit ID does NOT changes when you force TxStatus: Rapid
     // by holding a magnet to the sensor for long enough
     // 32 bit sensor ID is stable
     uint32_t unit_id = ((uint32_t)b[0] << 24) | (b[1] << 16) | (b[2] << 8) | (b[3]);
@@ -136,6 +138,7 @@ static int oil_smart_decode(r_device *decoder, bitbuffer_t *bitbuffer, unsigned 
     // unknown - B5 bits 4 - 2 (0x04 - 0x02). Bit 2 could be fixed 0
     uint8_t unknown = (b[5] & 0x0d) >> 1;
 
+    // TODO: the value for a bad reading has not been found?
     // Bad reading is zero depth
 
     // depth in cm msb B5 bit 1 (0x01) and B6
@@ -143,16 +146,16 @@ static int oil_smart_decode(r_device *decoder, bitbuffer_t *bitbuffer, unsigned 
 
     /* clang-format off */
     data_t *data = data_make(
-            "model",            "",             DATA_STRING, "Oil-Ultrasonic",
-            "id",               "",             DATA_FORMAT, "%08x", DATA_INT, unit_id,
-            "depth_cm",         "Depth",        DATA_INT,    depth,
-            "txstatus",         "TxStatus",     DATA_STRING, txstatus,
-            "temp_ok",          "temp_ok",      DATA_INT,    temp_ok,
-            "battery_ok",       "Battery",      DATA_INT,    battery,
-            "sensor",           "Sensor?",      DATA_INT,    sensor,
-            "counter",          "Counter",      DATA_INT,    counter,
-            "unknown",          "unknown",      DATA_INT,    unknown,
-            "mic",              "Integrity",    DATA_STRING, "CRC",
+            "model",            "",                 DATA_STRING, "Oil-Ultrasonic",
+            "id",               "",                 DATA_FORMAT, "%08x", DATA_INT, unit_id,
+            "depth_cm",         "Depth",            DATA_INT,    depth,
+            "txstatus",         "TxStatus",         DATA_STRING, txstatus,
+            "temp_ok",          "temp_ok",          DATA_INT,    temp_ok,
+            "battery_ok",       "Battery Level",    DATA_INT,    battery,
+            "sensor",           "Sensor?",          DATA_INT,    sensor,
+            "counter",          "Counter",          DATA_INT,    counter,
+            "unknown",          "unknown",          DATA_INT,    unknown,
+            "mic",              "Integrity",        DATA_STRING, "CRC",
             NULL);
     /* clang-format on */
 
